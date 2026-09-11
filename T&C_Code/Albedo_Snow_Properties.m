@@ -1,7 +1,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %   Subfunction  Albedo_Snow_Properties     %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function[snow_alb,tau_sno,e_sno]=Albedo_Snow_Properties(dt,SWE,h_S,Ts,Ta,SWEtm1,tau_snotm1,snow_albtm1,Th_Pr_sno,Pr_sno_day,Aice,Deb_Par,Cdeb,Cice,Ta_day,Pr_sno,Pr_liq,ros,N,Albsno_method)
+function[snow_alb,tau_sno,e_sno]=Albedo_Snow_Properties(dt,SWE,h_S,Ts,Ta,SWEtm1,tau_snotm1,snow_albtm1,Th_Pr_sno,Pr_sno_day,Aice,Deb_Par,Cdeb,Cice,Ta_day,Pr_sno,Pr_liq,ros,N,Albsno_method,SND)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -46,6 +46,7 @@ e_sno = 0.97; %%% Snow emissivity
 % end
 ANS=Albsno_method;
 %%%%%%%
+
 switch ANS
     case 1
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -200,27 +201,34 @@ switch ANS
         %   Snow albedo function as described in Ding et al. (2017)
         
         %%%%%
+        %% initialise albedo_iso, and iso_cloud
+        Asno_iso_cloud=0;Asno_iso=0;
+
+
         Asnotm1= tau_snotm1;
         
         Amax = 0.85;
-        Amin = 0.4;
+        % Amin = 0.45;
         if Cice == 1
             if Cdeb == 1
                 Amin =  Deb_Par.alb;
             else
-                Amin = Aice;
+                Amin = 0.5; %%%%% Aice in Shaoting's version
             end
         end
-        
+        % disp(Amin);
         Asnotm1(Asnotm1<Amin)=Amin;
         Asnotm1(Asnotm1>Amax)=Amax;
+
+
         %%%%%%%%%%%%%
-        if Pr_sno > 0.0
+        Th_Pr_sno=0;
+        if Pr_sno > 0.0 && Pr_sno_day > Th_Pr_sno %possibility to use a threshold with Pr_sno_day, as in Brock method, if too many refreshings occur
             %%%% Fresh snow falling 
             row = 1000; % water density [kg/m^3]
             Ta_day=mean(Ta_day); 
             ros_n = 1000*(0.05 + (((9/5)*Ta_day +32)> 0).*(((9/5)*Ta_day+32)./100).^2); %% [kg/m^3] new snow density [from Bras 1990]
-            ros_n(ros_n > 158.5) = 158.5; % Added MM 04/04/2024
+			ros_n(ros_n > 158.5) = 158.5; % Added MM 04/04/2024
             dsn = 0.001*Pr_sno_day*row/ros_n ; %%%[m] the new cumulative snowfall depth since the beginning of the snowfall event
             
             ros_nd = ros_n; %% density of dry snow  --- [kg/m^3] assumed to be the density of the new snow 
@@ -245,33 +253,50 @@ switch ANS
             else
                 alb_s = Asnotm1;
             end
-            
-            
+
+            % make sure new estimated snowfall albedo > previous one
+            if alb_s < Asnotm1
+                alb_s = Asnotm1;
+            end
+
             % Shallow snow impact
+            % frac_snow=1;
             frac_snow = dsn/(dsn + 0.02);  %  snow cover fraction of the new snowfall [-]
             Asno = alb_s*frac_snow + Asnotm1*(1-frac_snow);
-            
-            
+                        
         else
             % Snow Aging - No Fresh snow 
             
             %%%% Baker et al. [1990] and Verseghy [1991]
             %Amin =0.5; %% Amin =0.2;
-            tau_A = 0.008; tau_1 = 86400; %[s]
+            tau_A = 0.006 ;% Ding 0.008; Verseghy 0.006
+            tau_1 = 86400; %[s]
             tau_F = 0.24; %
             %tau_F = 0.48;
             %Amax = 0.85;
+            % %%% TC old schme
+            % if Ts < -0.01 %  A  % albedo of snow
+            %     %%% frozen
+            %     Asno = Asnotm1 -tau_A*dt/tau_1;
+            % else
+            %     % Melting Season
+            %     Asno= (Asnotm1 - Amin)*exp(-tau_F*dt/tau_1) + Amin; %%
+            % end
+
+            % %%% My new scheme
             if Ts < -0.01 %  A  % albedo of snow
                 %%% frozen
                 Asno = Asnotm1 -tau_A*dt/tau_1;
+            elseif Ts >= -0.01 && SND >= 0.10 % (20 cm w.e.)
+                % Melting Season and deep snow
+                Asno= (Asnotm1 - 0.5)*exp(-tau_F*dt/tau_1) + 0.5;
             else
-                % Melting Season
+                % Melting Season and shallow snow
                 Asno= (Asnotm1 - Amin)*exp(-tau_F*dt/tau_1) + Amin; %%
             end
             Asno(Asno<Amin)=Amin;
         end
         
-
         % Cloud (Petzold, 1977)
         if N > 0
             dac =  0.00449 + 0.097*N.^3; % Correction for Cloud cover
@@ -282,20 +307,42 @@ switch ANS
         % Sun-angle (Petzold, 1977)
         if (h_S/pi*180 <=40) &&  (h_S>0)
             dab =  -0.019 + 0.248*exp(-(h_S/pi*180)/15.5); % Correction for Solar Elevation
+            
         else
             dab=0;
         end
         
         tau_sno=Asno;
+        Asno_iso=Asno;   %  isotropic albedo (comparable to BDRF corrected satellite)
+        Asno_iso_cloud=Asno + dac;
         Asno = Asno + dac  + dab ;
+
+        
+
+        
         
         Asno(Asno<Amin)=Amin;
         Asno(Asno>Amax)=Amax;
-        
+        % if SWE<1;
+        %     % disp('asno triggered');
+        %     Asno=1;
+        % end
+
+        % Asno_iso(Asno_iso<Amin)=Amin;
+        % Asno_iso(Asno_iso>Amax)=Amax;
+
+        % Asno_iso_cloud(Asno_iso_cloud<Amin)=Amin;
+        % Asno_iso_cloud(Asno_iso_cloud>Amax)=Amax;
+
+        % Asno=0.85;
+        %%%% read albedo from file actually
+        % Asno=alb_timestep;
         snow_alb.dir_vis = Asno;
         snow_alb.dir_nir = Asno;
         snow_alb.dif_vis = Asno;
         snow_alb.dif_nir = Asno;
+
+    
         
 end
 return
