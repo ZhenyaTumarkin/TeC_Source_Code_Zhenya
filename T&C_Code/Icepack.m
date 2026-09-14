@@ -10,6 +10,7 @@ dth = dt/3600; %% [h]
 %%% OUTPUTS
 %%% PARAMETERS
 ci = 2093; %%% [J/Kg K] specific heat ice
+
 row = 1000; % water density [kg/m^3]
 roi = 916.2; %% ice density [kg/m^3]
 Lf= 1000*333.7; %% [J/Kg] %% Latent heat melt/freezing
@@ -39,9 +40,9 @@ if Csno == 0
         %Qfm = (Ts < 0)*(row*(IP_wc_L/1000)*Lf/dt) - (Ts >= 0)*(row*(IP_wc_F/1000)*Lf/dt); %%% [W/m^2]  %% Freezing/Melting Water in the icepack (not working)
         Qfm=0; %%%
         dQ = Rn + Qv + Qfm - H - QE -G;   % [W/m^2]  Variation Heat in the Icepack
-        dTs = (1000*dQ*dt)/(ci*(ICEeb)*row); %% Variation temperature in the Icepack [°C]
-        TsF = Tstm1 + dTs ; %%  Temperature Icepack [°C]
-        Qcc =ci*(ICEeb)*TsF*row/1000; %%  Icepack Cold Content [J °C/m^2 K]
+        dTs = (1000*dQ*dt)/(ci*(ICEeb)*row); %% Variation temperature in the Icepack [ï¿½C]
+        TsF = Tstm1 + dTs ; %%  Temperature Icepack [ï¿½C]
+        Qcc =ci*(ICEeb)*TsF*row/1000; %%  Icepack Cold Content [J ï¿½C/m^2 K]
         %%%%% MASS BALANCE -- TEMPERATURE UPDATE
         if Qcc <= 0;
             Im =0 ; % Ice melt [mm]
@@ -62,9 +63,9 @@ else
     ICEeb= min(2000,ICE); %%%[mm]  Maximum Ice for computing energy budget (no more than 2m)
     Qfm=0; %%%
     dQ = -G;   % [W/m^2]  Variation Heat in the Icepack
-    dTs = (1000*dQ*dt)/(ci*(ICEeb)*row); %% Variation temperature in the Icepack [°C]
-    TsF = Tstm1 + dTs ; %%  Temperature Icepack [°C]
-    Qcc =ci*(ICEeb)*TsF*row/1000; %%  Icepack Cold Content [J °C/m^2 K]
+    dTs = (1000*dQ*dt)/(ci*(ICEeb)*row); %% Variation temperature in the Icepack [ï¿½C]
+    TsF = Tstm1 + dTs ; %%  Temperature Icepack [ï¿½C]
+    Qcc =ci*(ICEeb)*TsF*row/1000; %%  Icepack Cold Content [J ï¿½C/m^2 K]
     %%%%% MASS BALANCE -- TEMPERATURE UPDATE
     if Qcc <= 0;
         Im =0 ; % Ice melt [mm]

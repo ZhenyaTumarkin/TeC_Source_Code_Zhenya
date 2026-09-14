@@ -8,10 +8,10 @@ function[TsF,Tdpsnow,SWE,D,ros,In_SWE,SP_wc,WR_SP,U_SWE,NIn_SWE,dQ12,Qfm,t_sls,S
 %%%INPUTS
 %dt time step [s]
 dth = dt/3600; %% [h]
-%Ta = %% air temperature [°C] --
-%Ts =  ; %% surface temperature [°C] --- before the computation
-%Tstm1 =  ; %% surface temperature [°C] previous step
-%Tdew [°C] dew point temperature
+%Ta = %% air temperature [ï¿½C] --
+%Ts =  ; %% surface temperature [ï¿½C] --- before the computation
+%Tstm1 =  ; %% surface temperature [ï¿½C] previous step
+%Tdew [ï¿½C] dew point temperature
 %Ws; %% [m/s] wind speed  ---
 %t_slstm1 % time since last snowfall [s]
 %SWEtm1 [mm]
@@ -33,7 +33,7 @@ dth = dt/3600; %% [h]
 %Csno
 %fpr = frequency of precipitation in dt [0-1]
 %%% OUTPUTS
-%TsF =  ; %% surface temperature [°C] --- After the computation
+%TsF =  ; %% surface temperature [ï¿½C] --- After the computation
 %In_SWE =
 %U_SWE =
 %SWE %% [mm]
@@ -106,9 +106,9 @@ else
     %%%%%%%%%%
     %%%% ENERGY BALANCE
     dQ1 = Rn + Qv - H - QE -G0;   % [W/m^2]  Variation Heat in the Snowpack
-    dTs = (1000*dQ1*dt)/(ci*(SWEteb)*row); %% Variation temperature in the snowpack [°C]
-    TsF = Tstm1 + dTs ; %%  Temperature Snowpack [°C]
-    Qcc =ci*(SWEteb)*TsF*row/1000; %%  Snowpack Cold Content [J °C/m^2 K]
+    dTs = (1000*dQ1*dt)/(ci*(SWEteb)*row); %% Variation temperature in the snowpack [ï¿½C]
+    TsF = Tstm1 + dTs ; %%  Temperature Snowpack [ï¿½C]
+    Qcc =ci*(SWEteb)*TsF*row/1000; %%  Snowpack Cold Content [J ï¿½C/m^2 K]
     %%%%% MASS BALANCE -- TEMPERATURE UPDATE
     if Qcc <= 0
         Sm_top =0 ; % Snow melt [mm]
@@ -120,7 +120,7 @@ else
         Sm_top = min(Sm,SWEteb);
         %%%%%%%%%%%%%%%%%%%%%%%%%
         dQres= Qcc/dt -  Lf*(Sm_top)*row/(1000*dt) ; %% [W/m^2] Additional Energy to melt below top layer
-        %Qcc =0; % Snowpack Cold Content [J °C/m^2 K]
+        %Qcc =0; % Snowpack Cold Content [J ï¿½C/m^2 K]
         dQ1=dQ1-dQres; 
     end
 end
@@ -147,9 +147,9 @@ else
     %SWEeb=SWE+In_SWE;
     %%%% ENERGY BALANCE
     dQ2 = G0 +  Qfm +  dQres -G;   % [W/m^2]  Variation Heat in the Snowpack
-    dTs = (1000*dQ2*dt)/(ci*(SWEeb)*row); %% Variation temperature in the snowpack [°C]
-    Tsnow = Tsnowtm1 + dTs ; %%  Temperature Snowpack [°C]
-    Qcc =ci*(SWEeb)*Tsnow*row/1000; %%  Snowpack Cold Content [J °C/m^2 K]
+    dTs = (1000*dQ2*dt)/(ci*(SWEeb)*row); %% Variation temperature in the snowpack [ï¿½C]
+    Tsnow = Tsnowtm1 + dTs ; %%  Temperature Snowpack [ï¿½C]
+    Qcc =ci*(SWEeb)*Tsnow*row/1000; %%  Snowpack Cold Content [J ï¿½C/m^2 K]
     %%%%% MASS BALANCE -- TEMPERATURE UPDATE
     if Qcc <= 0
         Sm1 =0 ; Sm2=0; % Snow melt [mm]
@@ -164,7 +164,7 @@ else
         In_SWE =  In_SWE - Sm2;
         %%%%%%%%%%%%%%%%%%%%%%%%%
         dQres= Qcc/dt -  Lf*(Sm1+Sm2)*row/(1000*dt) ; %% [W/m^2] Energy Lost -- theroetically to increase TsF or G
-        %Qcc =0; % Snowpack Cold Content [J °C/m^2 K]
+        %Qcc =0; % Snowpack Cold Content [J ï¿½C/m^2 K]
     end
 end
 %%%
@@ -175,6 +175,7 @@ dTsnow=Tsnow-sum(Tdpsnow.*diff(Zs_sno)/(1000*Dtm1));
 Sm = Sm1 + Sm2 + Sm_top ; %%% Snow melt intercepted and pack layer
 %%% SNOW DEPTH AND DENSITY
 [D,ros]=Snow_Depth(dt,(Sm1+Sm_top),row,Ts,Ta,Pr_sno,SWE,SWEtm1,Dtm1,rostm1,ros_max1,ros_max2); %%% Snow depth and Density
+
 %%%%%%%% LIQUID WATER SNOWPACK
 SP_wc_max = SWE*(0.03*(ros >= 200) + (ros < 200)*(0.03 +(0.1-0.03)*(200-ros)/200)); %% [] snow water retention factor [Belair 2003]
 %SP_wc_max=0;
@@ -224,7 +225,7 @@ function[D,ros]=Snow_Depth(dt,Sm,row,Ts,Ta,Pr_sno,SWE,SWEtm1,Dtm1,rostm1,ros_max
 % dt = [s]
 % Sm snow melting
 %row % water density [kg/m^3]
-%Ta  % air temperature [°C]
+%Ta  % air temperature [ï¿½C]
 % Pr_sno [mm]
 % SWEtm1 [mm]
 % Dtm1 [m]

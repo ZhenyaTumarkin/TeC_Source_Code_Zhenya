@@ -11,7 +11,7 @@ function[Ts,Pr_sno,Pr_liq,Ws_under,Csno,Cice,Cfol_H,Cfol_L,CLitter,NDVI,rb_H,rb_
     fapar_H,fapar_L,SIF_H,SIF_L,...
     gsr_H,Psi_x_H,Psi_l_H,Jsx_H,Jxl_H,Kleaf_H,Kx_H,Vx_H,Vl_H,...
     gsr_L,Psi_x_L,Psi_l_L,Jsx_L,Jxl_L,Kleaf_L,Kx_L,Vx_L,Vl_L,...
-    dQVEG,HV,QEV,TsV,Ts_under,WAT,q_run,EG_dis,J_Hdis,J_Ldis,Imelt,Smelt]=SVAT_UNIT(Tstm0,Pr,Ta,Ds,Ws,zatm,Tstm1,Tstm1_under,dt,ea,Latm,N,Pre,...
+    dQVEG,HV,QEV,TsV,Ts_under,WAT,q_run,EG_dis,J_Hdis,J_Ldis,Imelt,Smelt,Tdpice]=SVAT_UNIT(Tstm0,Pr,Ta,Ds,Ws,zatm,Tstm1,Tstm1_under,dt,ea,Latm,N,Pre,...
     OS,Psi_s_H,Psi_s_L,gsr_H,gsr_L,Exwat_H,Exwat_L,...
     LAI_H,SAI_H,LAI_L,SAI_L,LAIdead_H,LAIdead_L,BLit,Sllit,Kct,TminS,TmaxS,...
     Sp_SN_In,Sp_LAI_L_In,Sp_LAI_H_In,h_S,...
@@ -34,7 +34,7 @@ function[Ts,Pr_sno,Pr_liq,Ws_under,Csno,Cice,Cfol_H,Cfol_L,CLitter,NDVI,rb_H,rb_
     Psi_sto_50_L,Psi_sto_00_L,ZR95_L,...
     Axyl_H,PsiL50_H,PsiL00_H,Kleaf_max_H,Cl_H,Kx_max_H,PsiX50_H,Cx_H,...
     Axyl_L,PsiL50_L,PsiL00_L,Kleaf_max_L,Cl_L,Kx_max_L,PsiX50_L,Cx_L,...
-    min_SPD,OPT_VegSnow,OPT_SoilTemp,OPT_PlantHydr,Opt_CR,Opt_ST,Opt_ST2,OPT_STh,OPT_FR_SOIL,OPT_PH, parameterize_phase, hSTL, Albsno_method)
+    min_SPD,OPT_VegSnow,OPT_SoilTemp,OPT_PlantHydr,Opt_CR,Opt_ST,Opt_ST2,OPT_STh,OPT_FR_SOIL,OPT_PH, parameterize_phase, hSTL, Albsno_method,Tdpicetm1)
 %%% INPUTS
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%% OUTPUTS
@@ -65,6 +65,27 @@ rap_H=zeros(1,length(Ccrown)); rap_L=zeros(1,length(Ccrown));
 r_litter=zeros(1,length(Ccrown)); alp_litter=zeros(1,length(Ccrown));
 Ws_under=zeros(1,length(Ccrown));
 %%%%%%%%%%%%%
+
+
+%%% more initialisations - heat related vars
+%% Default ice/snow diagnostics: overwritten in relevant branches
+TsF = Tstm1;
+Tdpice = Tdpicetm1;
+Tice = Ticetm1(1);
+
+ICE = ICEtm1;
+ICE_D = ICE_Dtm1;
+IP_wc = IP_wctm1;
+WR_IP = 0;
+
+Imelt = 0;
+Smelt = 0;
+dQ = 0;
+Qfm = 0;
+
+
+
+
 %%% Partition Pr_sno Pr_liq
 [Pr_sno,Pr_liq]=Precipitation_partition(Pr,Ta,ea,Pre,parameterize_phase);
 %%% Throughfall
@@ -334,7 +355,7 @@ if Csno == 1
         Pr_liq,Pr_sno,rs_sunH,rs_sunL,rs_shdH,rs_shdL,d_leaf_H,d_leaf_L,r_litter,r_soil,b_soil,alp_soil,...
         Tstm1,G,Tdpsnowtm1,lan_sno,...
         zatm,disp_h,zom,zoh,zom_under,disp_h_H,zom_H,disp_h_L,zom_L,Ws,In_Littertm1,alp_litter,Pr_sno_day,Th_Pr_sno,ros_max1,ros_max2,...
-        Tdew,t_slstm1,SWEtm1,SNDtm1,rostm1,SP_wctm1,In_SWEtm1,fpr,Vavail,Vavail_plant_H,Vavail_plant_L,WATtm1,ICEtm1,OPT_VegSnow,min_SPD,TsV,hSTL);
+        Tdew,t_slstm1,SWEtm1,SNDtm1,rostm1,SP_wctm1,In_SWEtm1,fpr,Vavail,Vavail_plant_H,Vavail_plant_L,WATtm1,ICEtm1,IP_wctm1,OPT_VegSnow,min_SPD,TsV,hSTL,Tdpicetm1,Ticetm1,Ice_wc_sp);
 
        if exitflag>0
           break
@@ -395,7 +416,7 @@ else
                         Phy,s_SVG,bVG,Osat,Ohy,Oicetm1,Otm1,Gice,OPT_FR_SOIL,OPT_STh);
                     Tdamp = Tdp(1);
                 else
-                    %%% Ice over soil
+                    %%% Ice over soilTice
                     %%% Soil Heat Flux in Snow
                     [G,Tdamp]=Soil_Heat(dt,0,Tstm1,Tdamptm1,CTt);
                     Tdp=Tdamp*ones(1,ms);
@@ -421,7 +442,7 @@ else
                 Pr_liq,Pr_sno,rs_sunH,rs_sunL,rs_shdH,rs_shdL,d_leaf_H,d_leaf_L,r_litter,r_soil,b_soil,alp_soil,...
                 Tstm1,G,...
                 zatm,disp_h,zom,zoh,zom_under,disp_h_H,zom_H,disp_h_L,zom_L,Ws,In_Littertm1,alp_litter,Vavail,Vavail_plant_H,Vavail_plant_L,WATtm1,...
-                ICEtm1,IP_wctm1,Ice_wc_sp);
+                ICEtm1,IP_wctm1,Ice_wc_sp,hSTL,min_SPD,Tdpicetm1,Ticetm1);
             %%%%%%%%%%%%%%%%%%%
         end
         %%%% %%%%%%%%%%%%%%%%%%%
@@ -619,7 +640,7 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if Csno == 1
     %%%%%
-    if SNDtm1 > min_SPD
+    if SWEtm1 > 50
 
         %%%% Snow cover with temperature profile and two layers
 
@@ -630,10 +651,18 @@ if Csno == 1
     else
         %%%% Snow cover not deep enough to compute the temperature profile.
         %%%%
-        [TsF,SWE,SND,ros,In_SWE,SP_wc,WR_SP,U_SWE,NIn_SWE,dQ,Qfm,t_sls,Smelt,Gres]=Snowpacks(dt,...
-            Ta,Ts,Tstm1,Tdew,Ws,t_slstm1,SWEtm1,SNDtm1,rostm1,SP_wctm1,In_SWEtm1,In_max_SWE,dw_SNO,...
-            Pr_liq,Pr_sno,ESN,ESN_In,Rn,H,QE,G,Qv,Csnow,Ccrown,Cwat,Cfol_H,fpr,Pr_sno_day,Th_Pr_sno,ros_max1,ros_max2);
+        [TsF,ICE,ICE_D,IP_wc,WR_IP,dQ12,Qfm,Sm,Tdpice,Tice,...
+        SWE,In_SWE,SND,ros,SP_wc,WR_SP,U_SWE,NIn_SWE]...
+        =Icepack_translucent_snow(dt,Ts,Tstm1,ICEtm1,IP_wctm1,...
+        Pr_liq,Rn,H,QE,G,Qv,Cwat,Ccrown,Cfol_H,Csno,Cicew,...
+        Ice_wc_sp,Tdpicetm1,Ticetm1,Tdew,Ws,t_slstm1,ESN_In,...
+        In_max_SWE,In_SWEtm1,SWEtm1,ESN,SNDtm1,rostm1,ros_max1,...
+        ros_max2,hSTL,min_SPD,Ta,dw_SNO,SP_wctm1,Pr_sno);
         Tdpsnow=0*Tdpsnowtm1;
+        dQ = dQ12;
+        Smelt = Sm;
+        Imelt = 0;
+        t_sls = t_slstm1;
     end
 
     %%%%%%
@@ -679,9 +708,14 @@ if Csno == 1
 
         else
             %%%% Icepacks
+            if SWEtm1>50
             [Tice,ICE,ICE_D,IP_wc,WR_IP,dQI,QfmI,Imelt]=Icepack(dt,NaN,Ticetm1,ICEtm1,IP_wctm1,...
                 0,0,0,0,0,-G,0,Cwat,Ccrown,Cfol_H,Csno,Cicew,Ice_wc_sp,WR_SP);
             Tdeb=0;
+            else
+                Tdeb=0;
+                %ALL OTHER VARS SHOULD BE DEFINED ALREADY BY COMBINES THIN SNOW/ICE FUN
+            end
         end
 
         if Crock ==1 || Curb ==1  || Cwat ==1
@@ -721,7 +755,8 @@ else
             %%% Presence of debris cover == to rock for hydrology
             [In_deb,SE_deb]=Interceptions_Debris(dt,Csno,Cdeb,...
                 In_urbtm1,In_max_urb,Pr_liq,0,EIn_urb);
-
+            
+            
             %%%% Icepacks
             [Tice,ICE,ICE_D,IP_wc,WR_IP,dQ,Qfm,Imelt]=Icepack(dt,NaN,Ticetm1,ICEtm1,IP_wctm1,...
                 0,0,0,0,0,-Gn,0,Cwat,Ccrown,Cfol_H,Csno,Cicew,Ice_wc_sp,SE_deb);
@@ -739,8 +774,8 @@ else
             Gfin=G;
         else
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            [TsF,ICE,ICE_D,IP_wc,WR_IP,dQ,Qfm,Imelt]=Icepack(dt,Ts,Tstm1,ICEtm1,IP_wctm1,...
-                Pr_liq,EICE,Rn,H,QE,G,Qv,Cwat,Ccrown,Cfol_H,Csno,Cicew,Ice_wc_sp,0);
+            [TsF,ICE,ICE_D,IP_wc,WR_IP,dQ,Qfm,Imelt]=Icepack2layers(dt,Ts,Tstm1,ICEtm1,IP_wctm1,...
+                Pr_liq,EICE,Rn,H,QE,G,Qv,Cwat,Ccrown,Cfol_H,Csno,Cicew,Ice_wc_sp,0,Tdpicetm1,Ticetm1,hSTL,min_SPD);
             Tice = TsF;
             Tdeb = 0;
         end
