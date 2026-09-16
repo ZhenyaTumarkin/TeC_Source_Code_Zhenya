@@ -215,8 +215,9 @@ Vavail_plant_L= Vavail_plant_L';
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%% ENERGY SOLUTION
 if Csno == 1
-    %lan_sno = lan_air + (7.75*1e-5*rostm1 + 1.105*1e-6*rostm1.^2).*(lan_ice-lan_air); %%  [W/m K ] Thermal conductivity snow
-    
+    % lan_sno = lan_air + (7.75*1e-5*rostm1 + 1.105*1e-6*rostm1.^2).*(lan_ice-lan_air); %%  [W/m K ] Thermal conductivity snow
+    lan_sno =  0.023 + (7.75*1e-5*rostm1 + 1.105*1e-6*rostm1.^2).*(2.29-0.023); %%  [W/m K ] Thermal conductivity snow
+
     %%%%%%%
     if Cice == 1
         if Cdeb == 1
