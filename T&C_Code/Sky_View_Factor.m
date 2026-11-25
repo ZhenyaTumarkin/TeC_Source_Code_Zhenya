@@ -25,13 +25,16 @@ for i=1:m
     for j=1:n
         %waitbar(i/m,bau);
         if not(isnan(DTM(i,j)))
-             HZz=squeeze(squeeze(HZr(i,j,:))); 
+             HZz=squeeze(squeeze(HZr(i,j,:))); %% terrain horizon angle 
+             %%%%% 
+             %HZc=HZz; 
+             HZc= min(HZz,pi/2-atan(-tan(Sl(i,j)).*cos(Z'-As(i,j)))); %%cell horizon angle 
              %%%%%%%%%%%%%%%%%%%%
-             if sum(isnan(HZz))>0
+             if sum(isnan(HZc))>0
                  disp('Error in the Horizon Angle !!!') 
                  return 
              end
-             SvF(i,j) = 1/(2*pi)*nansum((N)*(cos(Sl(i,j)).*(sin(HZz)).^2 + sin(Sl(i,j)).*cos(Z'-As(i,j)).*((HZz)-sin(HZz).*cos(HZz)))); 
+             SvF(i,j) = 1/(2*pi)*sum((N)*(cos(Sl(i,j)).*(sin(HZc)).^2 + sin(Sl(i,j)).*cos(Z'-As(i,j)).*((HZc)-sin(HZc).*cos(HZc))),'omitnan'); 
         else
              SvF(i,j)=NaN;
         end 

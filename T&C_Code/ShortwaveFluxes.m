@@ -520,10 +520,6 @@ function[RabsbSun_veg,RabsbShd_veg,Rabsb_soi,PAR_sun,PAR_shd,Fsun,Fshd,Rrfl_vis_
 %sur_alb.dif_nir =
 soil_alb = sur_alb;
 %%% Iup Idn
-Iup.dir_vis = SvF*Iup.dir_vis;
-Iup.dif_vis = SvF*Iup.dif_vis;
-Iup.dir_nir = SvF*Iup.dir_nir;
-Iup.dif_nir = SvF*Iup.dif_nir;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%% OUTPUT

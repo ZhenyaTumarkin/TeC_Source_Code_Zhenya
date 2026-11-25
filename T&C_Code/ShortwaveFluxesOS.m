@@ -15,10 +15,10 @@ function[Rabsb,Rrfl_vis,Rrfl_nir]=ShortwaveFluxesOS(Rsw,SvF,alb)
 % SvF sky view factor
 %%%%%%% OUTPUT 
 %%% Rabs =[W/m^2] Absorbed Radiation 
-Rabs_vis = Rsw.dir_vis*(1-SvF*alb.dir_vis)+ Rsw.dif_vis*(1-SvF*alb.dif_vis); %%% [W/m^2] 
-Rabs_nir = Rsw.dir_nir*(1-SvF*alb.dir_nir)+ Rsw.dif_nir*(1-SvF*alb.dif_nir); %%% [W/m^2] 
+Rabs_vis = Rsw.dir_vis*(1-alb.dir_vis)+ Rsw.dif_vis*(1-alb.dif_vis); %%% [W/m^2] 
+Rabs_nir = Rsw.dir_nir*(1-alb.dir_nir)+ Rsw.dif_nir*(1-alb.dif_nir); %%% [W/m^2] 
 Rabsb = Rabs_vis + Rabs_nir; %% [W/m^2] 
-Rrfl_vis =  Rsw.dir_vis*(SvF*alb.dir_vis)+ Rsw.dif_vis*(SvF*alb.dif_vis); 
-Rrfl_nir =  Rsw.dir_nir*(SvF*alb.dir_nir)+ Rsw.dif_nir*(SvF*alb.dif_nir);
+Rrfl_vis =  Rsw.dir_vis*(alb.dir_vis)+ Rsw.dif_vis*(alb.dif_vis); 
+Rrfl_nir =  Rsw.dir_nir*(alb.dir_nir)+ Rsw.dif_nir*(alb.dif_nir);
 %%%%%%%%%%%%%%%%%%%%%%%%%%
 return 
